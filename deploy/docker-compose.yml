@@ -14,9 +14,23 @@ services:
       - uptime-kuma-data:/app/data
     environment:
       - UPTIME_KUMA_IS_CONTAINER=1
-      # GitHub token for pushing updates back to the fork.
-      # Generate at: https://github.com/settings/tokens (needs repo scope)
       - GITHUB_TOKEN=${GITHUB_TOKEN:-}
+    labels:
+      - "traefik.enable=true"
+      # HTTPS router
+      - "traefik.http.routers.uptime-kuma-megia.rule=Host(`status.megia.com.co`)"
+      - "traefik.http.routers.uptime-kuma-megia.entrypoints=https"
+      - "traefik.http.routers.uptime-kuma-megia.tls=true"
+      - "traefik.http.routers.uptime-kuma-megia.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.uptime-kuma-megia.service=uptime-kuma-megia"
+      # HTTP → HTTPS redirect
+      - "traefik.http.routers.uptime-kuma-megia-http.rule=Host(`status.megia.com.co`)"
+      - "traefik.http.routers.uptime-kuma-megia-http.entrypoints=http"
+      - "traefik.http.routers.uptime-kuma-megia-http.middlewares=uptime-kuma-megia-https@docker"
+      - "traefik.http.middlewares.uptime-kuma-megia-https.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.uptime-kuma-megia-https.redirectscheme.permanent=true"
+      # Service
+      - "traefik.http.services.uptime-kuma-megia.loadbalancer.server.port=3001"
     networks:
       - coolify
 

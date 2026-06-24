@@ -1,48 +1,36 @@
 ############################################
-# MegIA custom build — no official base image dependency
-# Builds frontend + backend from source
+# MegIA custom build
+# Single stage: git + devDeps kept for self-update capability
 ############################################
-FROM node:22-bookworm-slim AS build
+FROM node:22-bookworm-slim
+
+RUN apt update && apt --yes --no-install-recommends install \
+        git \
+        dumb-init \
+        iputils-ping \
+        ca-certificates \
+        curl \
+        sqlite3 && \
+    rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=1
 
-COPY .npmrc .npmrc
-COPY package.json package.json
-COPY package-lock.json package-lock.json
+ARG BRANCH=megia-custom
+RUN git clone --branch $BRANCH https://github.com/MegIA-Devs/uptime-kuma.git . && \
+    git remote add upstream https://github.com/louislam/uptime-kuma.git && \
+    git config user.email "devops@megia.co" && \
+    git config user.name "MegIA Bot"
 
+# All deps (including dev) — required for npm run build during self-update
 RUN npm ci
 
-COPY . .
 RUN npm run build
 
-############################################
-# Runtime image
-############################################
-FROM node:22-bookworm-slim AS release
-
-RUN apt update && \
-    apt --yes --no-install-recommends install \
-        sqlite3 \
-        ca-certificates \
-        iputils-ping \
-        dumb-init \
-        curl && \
-    rm -rf /var/lib/apt/lists/*
-
-WORKDIR /app
-
-COPY --from=build /app/node_modules /app/node_modules
-COPY --from=build /app/dist /app/dist
-COPY --from=build /app/server /app/server
-COPY --from=build /app/src /app/src
-COPY --from=build /app/public /app/public
-COPY --from=build /app/extra /app/extra
-COPY --from=build /app/db /app/db
-COPY --from=build /app/package.json /app/package.json
-
 RUN mkdir -p /app/data
+
+VOLUME ["/app/data"]
 
 EXPOSE 3001
 

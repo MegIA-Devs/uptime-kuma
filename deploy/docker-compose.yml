@@ -3,6 +3,8 @@ services:
     build:
       context: ..
       dockerfile: deploy/Dockerfile.megia
+      args:
+        BRANCH: megia-custom
     image: megia/uptime-kuma:latest
     container_name: uptime-kuma-megia
     restart: unless-stopped
@@ -12,6 +14,9 @@ services:
       - uptime-kuma-data:/app/data
     environment:
       - UPTIME_KUMA_IS_CONTAINER=1
+      # GitHub token for pushing updates back to the fork.
+      # Generate at: https://github.com/settings/tokens (needs repo scope)
+      - GITHUB_TOKEN=${GITHUB_TOKEN:-}
     networks:
       - coolify
 

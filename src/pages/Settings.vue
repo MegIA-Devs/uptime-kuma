@@ -121,6 +121,9 @@ export default {
                 about: {
                     title: this.$t("About"),
                 },
+                "megia-update": {
+                    title: "MegIA Updates",
+                },
             };
         },
     },

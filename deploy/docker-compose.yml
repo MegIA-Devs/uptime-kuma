@@ -1,0 +1,24 @@
+services:
+  uptime-kuma:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.megia
+    image: megia/uptime-kuma:latest
+    container_name: uptime-kuma-megia
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    volumes:
+      - uptime-kuma-data:/app/data
+    environment:
+      - UPTIME_KUMA_IS_CONTAINER=1
+    networks:
+      - coolify
+
+volumes:
+  uptime-kuma-data:
+    name: uptime-kuma-megia-data
+
+networks:
+  coolify:
+    external: true
